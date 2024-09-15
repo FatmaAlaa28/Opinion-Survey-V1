@@ -5,85 +5,104 @@ using Opinion_Survey.DTO;
 using Microsoft.AspNetCore.Authorization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
+
 
 namespace Opinion_Survey.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class FormController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IHostingEnvironment _hosting;
 
-        public FormController(AppDbContext context)
+        public FormController(AppDbContext context,IHostingEnvironment hosting)
         {
             _context = context;
+            _hosting = hosting;
         }
-
-        [HttpPost]
-        public IActionResult CreateForm([FromBody] FormModified inputform)
+        [HttpPost("create/{FolderId}")]
+        public async Task<IActionResult> CreateForm([FromForm] FormDTO formDto, int? FolderId)
         {
-            if (inputform == null)
-            {
-                return BadRequest(new { message = "Input form cannot be null" });
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            // Initialize form
-            var form = new Form
-            {
-                Title = inputform.Title,
-                Description = inputform.Description
-            };
-
             var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
             var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
-            try
+            // Step 1: Create and save the Form
+            var form = new Form
             {
-                var jwtToken = handler.ReadJwtToken(token);
-                var userId = User.Claims
-                    .FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+                Title = formDto.Title,
+                Description = formDto.Description,
+                UserId = userId,
+                FolderID = FolderId
+            };
 
-                if (string.IsNullOrEmpty(userId))
+            _context.Forms.Add(form);
+            await _context.SaveChangesAsync(); // Save form to get form.Id
+
+            // Step 2: Add each Question and save it individually
+            foreach (var questionDto in formDto.Questions)
+            {
+                var question = new Question
                 {
-                    return Unauthorized(new { message = "User ID not found in token." });
-                }
-
-                form.UserId = userId;
-            }
-            catch (Exception ex)
-            {
-                return Unauthorized(new { message = "Invalid token", details = ex.Message });
-            }
-
-            // Save form to the database
-            try
-            {
-                _context.Forms.Add(form);
-                _context.SaveChanges(); // Save to get the form.Id
-                //return Ok(form.Id);
-                // Initialize question object
-                Question question = new Question
-                {
-                    QuestionText = inputform.QuestionText,
-                    Type = inputform.Type,
-                    FormId = form.Id // FormId is available now after SaveChanges
+                    QuestionText = questionDto.QuestionText,
+                    Type = questionDto.Type,
+                    FormId = form.Id
                 };
 
-                _context.Questions.Add(question);
-                _context.SaveChanges();
+                // Handle ImageFile for Question
+                if (questionDto.ImageFile != null)
+                {
+                    string imageFolderPath = Path.Combine(_hosting.WebRootPath, "Images");
+                    var imagePath = Path.Combine(imageFolderPath, questionDto.ImageFile.FileName);
+                    using (var stream = new FileStream(imagePath, FileMode.Create))
+                    {
+                        await questionDto.ImageFile.CopyToAsync(stream);
+                    }
+                    question.Imagepath = imagePath;
+                }
 
-                return Ok(new { message = "Form and question created successfully", formId = form.Id, questionId = question.Id });
+                // Handle VideoFile for Question
+                if (questionDto.VideoFile != null)
+                {
+                    string videoFolderPath = Path.Combine(_hosting.WebRootPath, "Uploaded Video");
+                    var videoPath = Path.Combine(videoFolderPath, questionDto.VideoFile.FileName);
+                    using (var stream = new FileStream(videoPath, FileMode.Create))
+                    {
+                        await questionDto.VideoFile.CopyToAsync(stream);
+                    }
+                    question.Videopath = videoPath;
+                }
+
+                // Add the question to the context and save it
+                _context.Questions.Add(question);
+                await _context.SaveChangesAsync(); // Save question to get question.Id
+
+                // Step 3: Add each QuestionOption for this question
+                foreach (var optionDto in questionDto.Options)
+                {
+                    var option = new QuestionOption
+                    {
+                        OptionText = optionDto.OptionText,
+                        qId = question.Id
+                    };
+
+                    _context.QuestionOptions.Add(option);
+                }
+
+                // Save all options for this question
+                await _context.SaveChangesAsync();
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "An error occurred while saving the form and question", details = ex.Message });
-            }
+
+            return Ok("Form, questions, options, and media saved successfully.");
         }
+
+
+
     }
 }

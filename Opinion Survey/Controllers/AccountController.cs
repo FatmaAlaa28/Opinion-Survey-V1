@@ -4,11 +4,14 @@ using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Opinion_Survey.DTO;
 using Opinion_Survey.Models;
+using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
+
 
 namespace Opinion_Survey.Controllers
 {
@@ -19,11 +22,17 @@ namespace Opinion_Survey.Controllers
         AppDbContext _context;
         private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
-        public AccountController(AppDbContext context,UserManager<User> userManager , IConfiguration configuration )
+        private readonly IEmailSender _emailService;
+        private readonly IHostingEnvironment _hosting;
+       
+        public AccountController(AppDbContext context,UserManager<User> userManager 
+            , IConfiguration configuration ,IEmailSender emailSender,IHostingEnvironment hosting )
         {
             _context = context;
             _userManager = userManager;
             _configuration = configuration;
+            _emailService = emailSender;
+            _hosting = hosting;
         }
 
         [HttpPost("signUp")]
@@ -41,12 +50,28 @@ namespace Opinion_Survey.Controllers
                     Email = newuser.Email,
                     PhoneNumber = newuser.PhoneNumber
                 };
-            
+                string ImageFolderPath = Path.Combine(_hosting.WebRootPath, "Images");
+                string NewImagePath = Path.Combine(ImageFolderPath, "Default.jpeg");
+                //user.ImageFile.CopyTo(new FileStream(NewImagePath, FileMode.Create));
+                user.Imagepath = NewImagePath;
+
+
                 IdentityResult result = await _userManager.CreateAsync(user, newuser.Password);
 
                 if (result.Succeeded)
                 {
-                    return Ok("Success");
+                    var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                    // Build the confirmation link
+                    var confirmationLink = Url.Action(nameof(ConfirmEmail), "Account",
+                        new { token, email = user.Email }, Request.Scheme);
+
+                    // Send the confirmation email
+                    await _emailService.SendEmailAsync(user.Email, "Confirm your account",
+                        $"Please confirm your account by clicking <a href='{confirmationLink}'>here</a>");
+
+                    return Ok(new { message = "Registration successful. Please check your email to confirm your account." });
+
                 }
                 else
                 {
@@ -69,57 +94,27 @@ namespace Opinion_Survey.Controllers
 
             return BadRequest(ModelState);
         
-
-        //if(ModelState.IsValid)
-        //{
-        //    User user = new User();
-        //    user.Email = newuser.Email;
-        //    user.Password = newuser.Password;   
-        //    user.PhoneNumber = newuser.PhoneNumber;
-        //    user.Gender = newuser.Gender;
-        //    user.Age = newuser.Age;
-        //    user.Role = newuser.Role;
-        //    user.ConfirmPassword = newuser.ConfirmPassword;
-        //    user.EducationState = newuser.EducationState;
-        //    user.Name = newuser.Name;
-        //    _context.Add(user);
-
-        //    _context.SaveChanges();
-        //    return StatusCode(StatusCodes.Status204NoContent);
-        //}
     }
 
-        [HttpGet("confirm-email")]
-        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        [HttpGet("ConfirmEmail")]
+        [ApiExplorerSettings(IgnoreApi = true)] // This hides the endpoint in Swagger
+        public async Task<IActionResult> ConfirmEmail(string token, string email)
         {
-            if (userId == null || token == null)
-            {
-                return BadRequest(new { message = "Invalid email confirmation request." });
-            }
+            if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(email))
+                return BadRequest("Invalid token or email.");
 
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
-            {
-                return NotFound(new { message = "User not found." });
-            }
+                return BadRequest("User not found.");
 
             var result = await _userManager.ConfirmEmailAsync(user, token);
-
             if (result.Succeeded)
             {
-                return Ok(new { message = "Email confirmed successfully." });
+                return Ok(new { message = "Email confirmed successfully!" });
             }
 
-            return BadRequest(new { message = "Email confirmation failed.", errors = result.Errors });
+            return BadRequest(result.Errors);
         }
-
-
-
-
-
-
-
-
 
 
 
@@ -181,99 +176,14 @@ namespace Opinion_Survey.Controllers
                     return Unauthorized();
                 }
             }
-            return BadRequest();
+            return BadRequest("User Not Found");
         }
       
       
 
 
 
-        [HttpGet("GetProfile")]
-        [Authorize]
-        public IActionResult GetProfile()
-        {
-            GetProfile getUser = new();
-            try
-            {
-                var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-                var handler = new JwtSecurityTokenHandler();
-                var jwtToken = handler.ReadJwtToken(token);
-                var userId = User.Claims
-                    .FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-
-                if (string.IsNullOrEmpty(userId))
-                {
-                    return Unauthorized(new { message = "User ID not found in token." });
-                }
-                User user = _context.Users.FirstOrDefault(x => x.Id == userId);
-                if (user != null)
-                {
-                    getUser.FirstName = user.FirstName;
-                    getUser.LastName = user.LastName;
-                    getUser.Email = user.Email;
-                    getUser.PhoneNumber = user.PhoneNumber;
-                    getUser.Password = user.PasswordHash;
-                }
-                else
-                {
-                    return Unauthorized(new { message = "User not found" });
-                }
-            }
-            catch (Exception ex)
-            {
-                return Unauthorized(new { message = "Invalid token", details = ex.Message });
-            }
-            return Ok(getUser);
-        }
-
-
-        [HttpPost]
-        [Authorize]
-        public IActionResult PostNewData(GetProfile profile)
-        {
-            if(ModelState.IsValid)
-            {
-                try
-                {
-                    var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-                    var handler = new JwtSecurityTokenHandler();
-                    var jwtToken = handler.ReadJwtToken(token);
-                    var userId = User.Claims
-                        .FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-
-                    if (string.IsNullOrEmpty(userId))
-                    {
-                        return Unauthorized(new { message = "User ID not found in token." });
-                    }
-                    User user = _context.Users.FirstOrDefault(x => x.Id == userId);
-                    if (user != null)
-                    {
-                        user.FirstName = profile.FirstName;
-                        user.LastName = profile.LastName;
-                        user.Email = profile.Email;
-                        user.PhoneNumber = profile.PhoneNumber;
-                        user.PasswordHash = profile.Password;
-
-                        _context.Users.Update(user);
-                        _context.SaveChanges();
-
-                        return Ok();
-                    }
-                    else
-                    {
-                        return Unauthorized(new { message = "User not found" });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    return Unauthorized(new { message = "Invalid token", details = ex.Message });
-                }
-            }
-            else
-            {
-                return BadRequest(ModelState);
-            }
-        }
+        
 
     }
 }

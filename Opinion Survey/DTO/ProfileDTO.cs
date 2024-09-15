@@ -4,29 +4,36 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Opinion_Survey.DTO
 {
-    public class GetProfile
+    public class ProfileDTO
     {
         [PersonalData]
-        [Required]
+       
         [Column(TypeName = "nvarchar(50)")]
         public string? FirstName { get; set; }
 
         [PersonalData]
-        [Required]
+       
         [Column(TypeName = "nvarchar(50)")]
         public string? LastName { get; set; }
 
-        [Required]
+       
         [DataType(DataType.PhoneNumber)]
         public string PhoneNumber { get; set; }
 
         [DataType(DataType.EmailAddress)]
-        [Required]
+       
         public string Email { get; set; }
 
         [DataType(DataType.Password)]
-        [Required]
-        public string Password { get; set; }
+        public string? CurrentPassword { get; set; }
+
+        [DataType(DataType.Password)]
+        public string? NewPassword { get; set; }
+
+        public string? Imagepath { get; set; }
+
+        public IFormFile? ImageFile { get; set; }
+
 
     }
 }

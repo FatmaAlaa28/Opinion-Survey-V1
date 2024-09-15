@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Opinion_Survey.Confirm_Email;
 using Opinion_Survey.DTO;
 using Opinion_Survey.Extension;
 using Opinion_Survey.Models;
@@ -27,15 +26,14 @@ namespace Opinion_Survey
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
 
-            builder.Services.AddIdentity<User, IdentityRole>()
-                .AddEntityFrameworkStores<AppDbContext>();
+            //builder.Services.AddIdentity<User, IdentityRole>()
+            //    .AddEntityFrameworkStores<AppDbContext>();
 
-            /*
-              builder.Services.AddIdentity<User,IdentityRole>(  option => { 
-                 option.SignIn.RequireConfirmedEmail = true; }) 
-                .AddEntityFrameworkStores<AppDbContext>()
-                .AddDefaultTokenProviders();
-            builder.Services.AddTransient<IEmailSender, EmailSender>();*/
+            builder.Services.AddIdentity<User, IdentityRole>()
+        .AddDefaultUI() // Adds Identity UI
+        .AddEntityFrameworkStores<AppDbContext>()
+        .AddDefaultTokenProviders();
+            builder.Services.AddTransient<IEmailSender, EmailSender>();
 
             // add configration of JWT for external request
             //custom configration in folder Extension
@@ -45,16 +43,17 @@ namespace Opinion_Survey
 
 
             //log google
+            
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowSpecificOrigins",
-                    builder =>
-                    {
-                        builder.WithOrigins() // Specify your frontend URL here
-                               .AllowAnyMethod()
-                               .AllowAnyHeader()
-                               .AllowCredentials(); // If you need to include credentials like cookies or authorization headers
-                    });
+                options.AddPolicy("AllowSpecificOrigins", builder =>
+                {
+                    builder.WithOrigins() // Your frontend's URL
+                           .AllowAnyMethod()
+                           .AllowAnyHeader()
+                           .AllowCredentials() // Allow credentials if needed (for cookies, tokens, etc.)
+                           .SetIsOriginAllowedToAllowWildcardSubdomains(); // Optional, if you want to allow subdomains
+                });
             });
             //Log Google
 

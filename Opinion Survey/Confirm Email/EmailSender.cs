@@ -1,50 +1,31 @@
-﻿using System.Net.Mail;
-using System.Net;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using MailKit.Net.Smtp;
+using MimeKit;
 
-namespace Opinion_Survey.Confirm_Email
+public class EmailSender : IEmailSender
 {
-    public class EmailSender : IEmailSender
+    private readonly IConfiguration _configuration;
+
+    public EmailSender(IConfiguration configuration)
     {
-        public async Task SendEmailAsync(string email, string subject, string htmlMessage)
-        {
-            try
-            {
-                var smtpClient = new SmtpClient("smtp.gmail.com")
-                {
-                    Port = 587, // or 465 for SSL
-                    Credentials = new NetworkCredential("adm6774969@gmail.com", "123@Admin"),
-                    EnableSsl = true,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    Timeout = 20000
-                };
-
-                var mailMessage = new MailMessage
-                {
-                    From = new MailAddress("adm6774969@gmail.com"),
-                    Subject = subject,
-                    Body = htmlMessage,
-                    IsBodyHtml = true,
-                };
-
-                mailMessage.To.Add(email);
-
-                await smtpClient.SendMailAsync(mailMessage);
-            }
-            catch (SmtpException ex)
-            {
-                // Log the exception
-                Console.WriteLine($"SMTP Error: {ex.Message}");
-                throw; // Re-throw or handle as appropriate
-            }
-            catch (Exception ex)
-            {
-                // Log general exceptions
-                Console.WriteLine($"Error: {ex.Message}");
-                throw; // Re-throw or handle as appropriate
-            }
-        }
-
+        _configuration = configuration;
     }
 
+    public async Task SendEmailAsync(string email, string subject, string htmlMessage)
+    {
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress("Opinion Survey", _configuration["EmailSettings:From"]));
+        message.To.Add(MailboxAddress.Parse(email));
+        message.Subject = subject;
+
+        var bodyBuilder = new BodyBuilder { HtmlBody = htmlMessage };
+        message.Body = bodyBuilder.ToMessageBody();
+
+        using var smtp = new SmtpClient();
+        await smtp.ConnectAsync(_configuration["EmailSettings:SmtpServer"], int.Parse(_configuration["EmailSettings:Port"]), MailKit.Security.SecureSocketOptions.StartTls);
+        await smtp.AuthenticateAsync(_configuration["EmailSettings:Username"], _configuration["EmailSettings:Password"]);
+        await smtp.SendAsync(message);
+        await smtp.DisconnectAsync(true);
+    }
 }

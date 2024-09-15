@@ -19,6 +19,8 @@ namespace Opinion_Survey.Models
         public string Title { get; set; }
         public string Description { get; set; }
 
+        
+
         [ForeignKey("Users")]
         public string UserId { get; set; }
 
@@ -27,6 +29,6 @@ namespace Opinion_Survey.Models
 
         public virtual User Users { get; set; }
         public virtual Folder Folders { get; set; }
-        public virtual ICollection<Question> Questions { get; set; } // Navigation property
+        public virtual List<Question> Questions { get; set; } // Navigation property
     }
 }

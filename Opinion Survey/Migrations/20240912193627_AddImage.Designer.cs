@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Opinion_Survey.Models;
 
@@ -11,9 +12,10 @@ using Opinion_Survey.Models;
 namespace Opinion_Survey.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240912193627_AddImage")]
+    partial class AddImage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -264,18 +266,12 @@ namespace Opinion_Survey.Migrations
                     b.Property<int>("FormId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Imagepath")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("QuestionText")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Type")
                         .HasColumnType("int");
-
-                    b.Property<string>("Videopath")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -563,7 +559,7 @@ namespace Opinion_Survey.Migrations
             modelBuilder.Entity("Opinion_Survey.Models.QuestionOption", b =>
                 {
                     b.HasOne("Opinion_Survey.Models.Question", "Questions")
-                        .WithMany("Options")
+                        .WithMany()
                         .HasForeignKey("qId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -625,11 +621,6 @@ namespace Opinion_Survey.Migrations
             modelBuilder.Entity("Opinion_Survey.Models.Form", b =>
                 {
                     b.Navigation("Questions");
-                });
-
-            modelBuilder.Entity("Opinion_Survey.Models.Question", b =>
-                {
-                    b.Navigation("Options");
                 });
 #pragma warning restore 612, 618
         }

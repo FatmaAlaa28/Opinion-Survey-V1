@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Opinion_Survey.Models;
 
@@ -11,9 +12,10 @@ using Opinion_Survey.Models;
 namespace Opinion_Survey.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240913194946_imageQuestion")]
+    partial class imageQuestion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -236,6 +238,9 @@ namespace Opinion_Survey.Migrations
                         .IsRequired()
                         .HasColumnType("int");
 
+                    b.Property<string>("Imagepath")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -264,18 +269,12 @@ namespace Opinion_Survey.Migrations
                     b.Property<int>("FormId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Imagepath")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("QuestionText")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Type")
                         .HasColumnType("int");
-
-                    b.Property<string>("Videopath")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

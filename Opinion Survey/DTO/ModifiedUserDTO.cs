@@ -2,7 +2,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
 using Opinion_Survey.Models;
-using Type = Opinion_Survey.Models.Type;
 
 namespace Opinion_Survey.DTO
 {
@@ -52,21 +51,5 @@ namespace Opinion_Survey.DTO
         public string Password { get; set; }
     }
 
-    public class FormModified
-    {
-        public string Title { get; set; }
-        public string Description { get; set; }
-        //public DateTime StartDate { get; set; }
-        //public DateTime EndDate { get; set; }
-        //public string OwnerName { get; set; }
-        //public string WebTitle { get; set; }
-        //public int Points { get; set; }
-        //public int MaxResponsses { get; set; }
-        public string QuestionText { get; set; }
-        //public string OptionText { get; set; }
-
-        public Type Type { get; set; }
-
-
-    }
+    
 }

@@ -20,8 +20,8 @@ namespace Opinion_Survey.Controllers
         }
 
         //folder is parent and have child(Folder,Forms)
-        [HttpGet("GetFolder")]
-        public IActionResult GetElementOfFolder(int idFolder)
+        [HttpGet("GetFolder/{idFolder}")]
+        public IActionResult GetElementOfFolder([FromRoute] int idFolder)
         {
             List<Folder> folders = _context.Folders.Where(x => x.ParentFolderId == idFolder).ToList();
             List<Form> forms = _context.Forms.Where(x=> x.FolderID == idFolder).ToList();

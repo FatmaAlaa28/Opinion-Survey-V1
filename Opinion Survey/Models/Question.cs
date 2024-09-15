@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Opinion_Survey.Models
 {
-    public enum Type
+    public enum TypeOfQuestion
     {
         SingleChoice = 1,
         MultipleChoice = 2,
@@ -22,12 +22,16 @@ namespace Opinion_Survey.Models
         public string QuestionText { get; set; }
 
         [Required]
-        public Type Type { get; set; }
-
+        public TypeOfQuestion Type { get; set; }
+        public string? Imagepath { get; set; }
+       
+        public string? Videopath { get; set; }
         // Foreign Key to Form
         [ForeignKey("Forms")]
         public int FormId { get; set; }
 
-        public virtual Form Forms { get; set; } // Changed from Forms to Form
+        public virtual Form Forms { get; set; } 
+
+        public List<QuestionOption> Options { get; set; }
     }
 }
