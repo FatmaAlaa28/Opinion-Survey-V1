@@ -53,8 +53,8 @@ namespace Opinion_Survey.Controllers
                 string ImageFolderPath = Path.Combine(_hosting.WebRootPath, "Images");
                 string NewImagePath = Path.Combine(ImageFolderPath, "Default.jpeg");
                 //user.ImageFile.CopyTo(new FileStream(NewImagePath, FileMode.Create));
-                user.Imagepath = NewImagePath;
-
+                //user.Imagepath = NewImagePath;
+                user.Imagepath = Path.Combine("Images", "Default.jpeg");
 
                 IdentityResult result = await _userManager.CreateAsync(user, newuser.Password);
 
@@ -165,7 +165,9 @@ namespace Opinion_Survey.Controllers
                     var _token = new
                     {
                         token = new JwtSecurityTokenHandler().WriteToken(token),
-                        expiration = token.ValidTo
+                        expiration = token.ValidTo,
+                        firstName = checkUser.FirstName,
+                        lastName = checkUser.LastName
                     };
 
                     return Ok(_token);

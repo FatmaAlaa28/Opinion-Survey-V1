@@ -31,7 +31,7 @@ namespace Opinion_Survey.Controllers
         [Authorize]
         public IActionResult GetProfile()
         {
-            ProfileDTO getUser = new();
+            GetProfileDTO getUser = new();
             try
             {
                 var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
@@ -68,7 +68,7 @@ namespace Opinion_Survey.Controllers
 
         [HttpPost("postUpdateProfile")]
         [Authorize]
-        public async Task<IActionResult> PostNewData([FromForm] ProfileDTO profile)
+        public async Task<IActionResult> PostNewData([FromForm] PostProfileDto profile)
         {
             if (ModelState.IsValid)
             {
@@ -104,10 +104,7 @@ namespace Opinion_Survey.Controllers
                             }
                             user.Imagepath = profile.ImageFile.FileName;
                         }
-                        else
-                        {
-                            user.Imagepath = profile.Imagepath;
-                        }
+                        
 
                         // Handle password change
                         if (!string.IsNullOrEmpty(profile.CurrentPassword) && !string.IsNullOrEmpty(profile.NewPassword))
