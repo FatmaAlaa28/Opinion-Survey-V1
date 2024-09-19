@@ -6,6 +6,7 @@ using Opinion_Survey.Extension;
 using Opinion_Survey.Models;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Configuration;
+using Opinion_Survey.Controllers;
 namespace Opinion_Survey
 {
     public class Program
@@ -18,9 +19,14 @@ namespace Opinion_Survey
             // Add services to the container.
 
             builder.Services.AddControllers();
+
+            // Add HttpClient service
+            builder.Services.AddHttpClient();
+
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGenJwtAuth();
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -50,9 +56,9 @@ namespace Opinion_Survey
                 {
                     builder.WithOrigins() // Your frontend's URL
                            .AllowAnyMethod()
-                           .AllowAnyHeader()
-                           .AllowCredentials() // Allow credentials if needed (for cookies, tokens, etc.)
-                           .SetIsOriginAllowedToAllowWildcardSubdomains(); // Optional, if you want to allow subdomains
+                           .AllowAnyHeader();
+                           //.AllowCredentials() // Allow credentials if needed (for cookies, tokens, etc.)
+                           //.SetIsOriginAllowedToAllowWildcardSubdomains(); // Optional, if you want to allow subdomains
                 });
             });
             //Log Google

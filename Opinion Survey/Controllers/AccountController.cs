@@ -139,6 +139,7 @@ namespace Opinion_Survey.Controllers
                     claims.Add(new Claim(ClaimTypes.NameIdentifier, checkUser.Id));
                     // id for jwt
                     claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
+                    claims.Add(new Claim(ClaimTypes.Email, user.Email));
 
 
                     //Roles
@@ -147,6 +148,7 @@ namespace Opinion_Survey.Controllers
                     {
                         claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
                     }
+
                     // Signing Credential [is Key] symmetric encription key (prepare key using symatricSecurityKey)
                     var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:SecretKey"]));
                     var sc = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -161,13 +163,14 @@ namespace Opinion_Survey.Controllers
                         signingCredentials: sc
                         );
 
-                     // token object thar we send with responss and expiration Date
+                    // token object thar we send with responss and expiration Date
                     var _token = new
                     {
                         token = new JwtSecurityTokenHandler().WriteToken(token),
                         expiration = token.ValidTo,
                         firstName = checkUser.FirstName,
-                        lastName = checkUser.LastName
+                        lastName = checkUser.LastName,
+                        image = checkUser.Imagepath
                     };
 
                     return Ok(_token);

@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 namespace Opinion_Survey.Extension
 {
@@ -48,7 +49,54 @@ namespace Opinion_Survey.Extension
                  });
             
         }
+
+        public static void AddSwaggerGenJwtAuth(this IServiceCollection services/*, ConfigurationManager configuration*/)
+        {
+            services.AddSwaggerGen(o =>
+            {
+                o.SwaggerDoc("v1", new OpenApiInfo()
+                {
+                    Version = "v1",
+                    Title = "Test API",
+                    Description = "Opinion Survey",
+                    Contact = new OpenApiContact()
+                    {
+                        Name = "Fatma",
+                        Email = "Fatma@gmail.com",
+                        Url = new Uri("https://mydomain.com")
+                    }
+                });
+
+                o.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Enter the JWT key"
+                });
+                o.AddSecurityRequirement(new OpenApiSecurityRequirement() {
+                  {
+                     new OpenApiSecurityScheme()
+                    {
+                        Reference =new OpenApiReference()
+                        {
+                            Type =ReferenceType.SecurityScheme,
+                            Id="Bearer"
+                        },
+                        Name="Bearer",
+                        In=ParameterLocation.Header
+                    },
+                    new List<string>()
+                  }
+                });
+            });
+        }
+
     }
+
+
 }
 
 

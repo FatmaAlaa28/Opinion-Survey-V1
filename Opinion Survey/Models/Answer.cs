@@ -9,6 +9,8 @@ namespace Opinion_Survey.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public string AnsText { get; set; }
+        public string? SentimentResult { get; set; }
+        public DateTime AnalyzedAt { get; set; }
 
         [ForeignKey("Questions")]
         public int QId { get; set; }
